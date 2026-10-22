@@ -14,31 +14,50 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="GoviLink">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    html, body { height:100%; margin:0; background:#0c2217; font-family:'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; }
-    #frame { position:fixed; left:0; right:0; bottom:0; top:0; width:100%; height:100%; border:0; background:#fff; opacity:0; transition:opacity .25s; }
+    * { box-sizing:border-box; }
+    html, body { height:100%; margin:0; background:#0c2217; font-family:'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; color:#15221b; }
+    .hero { background:radial-gradient(900px 500px at 15% -10%, #1d6f47 0%, transparent 60%), linear-gradient(160deg, #0b2a1b 0%, #0f3b26 55%, #0a2216 100%); }
+
+    /* ---------- the app (only shown inside the installed app) ---------- */
+    #frame { position:fixed; inset:0; width:100%; height:100%; border:0; background:#fff; opacity:0; transition:opacity .25s; display:none; }
     #frame.on { opacity:1; }
-    #splash { position:fixed; inset:0; display:grid; place-items:center; color:#d6e8de; background:radial-gradient(900px 500px at 20% -10%, #1d6f47 0%, transparent 60%), linear-gradient(160deg, #0b2a1b 0%, #0f3b26 55%, #0a2216 100%); transition:opacity .3s; }
+    #splash { position:fixed; inset:0; display:none; place-items:center; color:#d6e8de; transition:opacity .3s; }
     #splash.off { opacity:0; pointer-events:none; }
     #splash .box { text-align:center; }
     #splash img { width:84px; height:84px; border-radius:20px; box-shadow:0 8px 28px rgba(0,0,0,.35); }
-    #splash h1 { margin:16px 0 4px; font-size:26px; color:#fff; letter-spacing:.01em; }
+    #splash h1 { margin:16px 0 4px; font-size:26px; color:#fff; }
     #splash p { margin:0; font-size:13px; color:#8fb3a0; letter-spacing:.05em; }
     .spin { width:22px; height:22px; border-radius:50%; margin:22px auto 0; border:2.5px solid rgba(255,255,255,.2); border-top-color:#4fd18b; animation:spin .8s linear infinite; }
     @keyframes spin { to { transform:rotate(360deg); } }
     #trouble { display:none; margin-top:22px; font-size:13px; color:#b9d3c4; }
     #trouble a { color:#6fe0a6; }
-    /* install hint: a slim bar that disappears once used or dismissed */
-    #install { position:fixed; left:0; right:0; bottom:0; z-index:5; display:none; align-items:center; gap:12px; padding:10px 14px calc(10px + env(safe-area-inset-bottom)); background:#0c2217; color:#d6e8de; font-size:13.5px; box-shadow:0 -4px 18px rgba(0,0,0,.25); }
-    #install.on { display:flex; }
-    #install span { flex:1; }
-    #install button { border:0; border-radius:8px; padding:8px 14px; font:inherit; font-weight:600; cursor:pointer; }
-    #install .go { background:#1f9d62; color:#fff; }
-    #install .no { background:transparent; color:#8fb3a0; }
+
+    /* ---------- the install page (shown in a normal browser tab) ---------- */
+    #gate { min-height:100%; display:none; align-items:center; justify-content:center; padding:28px 18px; }
+    .card { width:100%; max-width:480px; background:#fff; border-radius:18px; padding:34px 32px 30px; box-shadow:0 24px 60px rgba(0,0,0,.35); text-align:center; }
+    .card img.logo { width:72px; height:72px; border-radius:18px; box-shadow:0 6px 20px rgba(20,108,67,.35); }
+    .card h1 { margin:18px 0 6px; font-size:26px; letter-spacing:-.02em; }
+    .card p { margin:0; color:#5a6a62; line-height:1.55; font-size:14.5px; }
+    .card .lead { margin-top:6px; }
+    button.install { display:block; width:100%; margin-top:26px; padding:15px 18px; border:0; border-radius:12px; background:#146c43; color:#fff; font:inherit; font-size:16px; font-weight:700; cursor:pointer; box-shadow:0 4px 14px rgba(20,108,67,.35); }
+    button.install:hover { background:#0f5a37; }
+    button.install:disabled { background:#9ec5b0; cursor:default; box-shadow:none; }
+    .steps { margin:26px 0 0; padding:18px 18px 4px; background:#f3f7f5; border-radius:12px; text-align:left; font-size:13.5px; color:#2a3a31; line-height:1.55; }
+    .steps b { display:block; margin-bottom:8px; font-size:12px; letter-spacing:.07em; text-transform:uppercase; color:#5a6a62; }
+    .steps ol { margin:0 0 14px; padding-left:20px; }
+    .steps li { margin:5px 0; }
+    .notice { margin-top:22px; padding:12px 14px; border-radius:10px; font-size:13.5px; text-align:left; }
+    .notice.ok { background:#e9f5ee; color:#0b4a2d; border:1px solid #d2ebdc; }
+    .notice.warn { background:#fff6e0; color:#6f4a0a; border:1px solid #ecd9a0; }
+    .small { margin-top:20px; font-size:12px; color:#8b9992; }
+    .hide { display:none !important; }
   </style>
 </head>
-<body>
-  <div id="splash">
+<body class="hero">
+  <!-- inside the installed app -->
+  <div id="splash" class="hero">
     <div class="box">
       <img src="icon-192.png" alt="">
       <h1>GoviLink</h1>
@@ -48,46 +67,105 @@
     </div>
   </div>
   <iframe id="frame" title="GoviLink" allow="clipboard-read; clipboard-write; fullscreen; downloads"></iframe>
-  <div id="install"><span id="installtext">Install GoviLink on this device for one-tap access.</span><button class="go" id="installgo" type="button">Install</button><button class="no" id="installno" type="button">Not now</button></div>
+
+  <!-- in a normal browser tab: install is the only thing offered -->
+  <div id="gate">
+    <div class="card">
+      <img class="logo" src="icon-192.png" alt="GoviLink">
+      <h1 id="gatetitle">Install GoviLink</h1>
+      <p class="lead" id="gatelead">GoviLink works as an app on your computer or phone. Install it once, then open it from its icon whenever you need it.</p>
+
+      <button class="install" id="installbtn" type="button" disabled>Preparing…</button>
+
+      <div class="notice ok hide" id="doneNote"><b>GoviLink is installed.</b> Close this page and open <b>GoviLink</b> from its icon: the Start menu or desktop on a computer, or the home screen on a phone. Then sign in.</div>
+      <div class="notice warn hide" id="alreadyNote"><b>GoviLink is already installed on this device.</b> Open it from its icon (Start menu or desktop on a computer, home screen on a phone) and sign in there.</div>
+
+      <div class="steps hide" id="howIos"><b>Install on iPhone or iPad</b><ol><li>Open this page in <b style="display:inline;text-transform:none;letter-spacing:0;color:inherit;font-size:inherit">Safari</b>.</li><li>Tap the <b style="display:inline;text-transform:none;letter-spacing:0;color:inherit;font-size:inherit">Share</b> button (square with an arrow).</li><li>Choose <b style="display:inline;text-transform:none;letter-spacing:0;color:inherit;font-size:inherit">Add to Home Screen</b>, then <b style="display:inline;text-transform:none;letter-spacing:0;color:inherit;font-size:inherit">Add</b>.</li><li>Open GoviLink from your home screen.</li></ol></div>
+      <div class="steps hide" id="howOther"><b>If the button above does not work</b><ol><li>Use <b style="display:inline;text-transform:none;letter-spacing:0;color:inherit;font-size:inherit">Google Chrome</b> or <b style="display:inline;text-transform:none;letter-spacing:0;color:inherit;font-size:inherit">Microsoft Edge</b>.</li><li>Click the install icon at the right end of the address bar, or open the browser menu (⋮ or …) and choose <b style="display:inline;text-transform:none;letter-spacing:0;color:inherit;font-size:inherit">Install GoviLink</b> / <b style="display:inline;text-transform:none;letter-spacing:0;color:inherit;font-size:inherit">Install app</b>.</li><li>On Android, tap the menu (⋮) then <b style="display:inline;text-transform:none;letter-spacing:0;color:inherit;font-size:inherit">Install app</b>.</li></ol></div>
+      <p class="small">GoviLink · for CAFT staff</p>
+    </div>
+  </div>
 
   <script>
     // The address of the GoviLink web app (an Apps Script deployment). Updates to the app reach everyone automatically.
     var APP_URL = 'https://script.google.com/macros/s/AKfycbyIAir3h3U8SM17dVF0tM2W84OUcgmj1OF_UcgXkZmyeSUMBWfOrqrSB1ohAX0HwPNX/exec';
 
-    var frame = document.getElementById('frame');
-    var splash = document.getElementById('splash');
-    document.getElementById('direct').href = APP_URL;
-    frame.addEventListener('load', function () { frame.className = 'on'; splash.className = 'off'; });
-    frame.src = APP_URL;
-    setTimeout(function () { if (splash.className !== 'off') document.getElementById('trouble').style.display = 'block'; }, 12000);
+    function $(id) { return document.getElementById(id); }
+    function show(id, on) { $(id).classList[on ? 'remove' : 'add']('hide'); }
 
-    // ---- install prompt
-    var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-    var bar = document.getElementById('install');
-    var dismissed = false;
-    try { dismissed = localStorage.getItem('govilink-install-dismissed') === '1'; } catch (e) {}
-    function hideBar() { bar.className = ''; try { localStorage.setItem('govilink-install-dismissed', '1'); } catch (e) {} }
-    document.getElementById('installno').addEventListener('click', hideBar);
-    var deferred = null;
-    window.addEventListener('beforeinstallprompt', function (e) {
-      e.preventDefault();
-      deferred = e;
-      if (!standalone && !dismissed) bar.className = 'on';
-    });
-    document.getElementById('installgo').addEventListener('click', function () {
-      if (deferred) { deferred.prompt(); deferred.userChoice.then(function () { deferred = null; hideBar(); }); }
-      else hideBar();
-    });
-    window.addEventListener('appinstalled', function () { bar.className = ''; });
-    // iPhones and iPads have no install button: explain the Share menu instead
-    var ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
-    if (ios && !standalone && !dismissed) {
-      document.getElementById('installtext').textContent = 'To install: tap the Share button, then “Add to Home Screen”.';
-      document.getElementById('installgo').style.display = 'none';
-      document.getElementById('installno').textContent = 'Got it';
-      bar.className = 'on';
+    // Running as an installed app (any of the app display modes), or opened with the maintenance switch ?open=1
+    var params = new URLSearchParams(location.search);
+    var inApp = ['standalone', 'fullscreen', 'minimal-ui', 'window-controls-overlay'].some(function (m) { return window.matchMedia('(display-mode: ' + m + ')').matches; }) ||
+      window.navigator.standalone === true || params.get('open') === '1';
+
+    function startApp() {
+      $('gate').style.display = 'none';
+      $('splash').style.display = 'grid';
+      var frame = $('frame');
+      frame.style.display = 'block';
+      $('direct').href = APP_URL;
+      frame.addEventListener('load', function () { frame.className = 'on'; $('splash').className = 'hero off'; });
+      frame.src = APP_URL;
+      setTimeout(function () { if ($('splash').className.indexOf('off') === -1) $('trouble').style.display = 'block'; }, 12000);
     }
 
+    function startGate() {
+      document.body.className = 'hero';
+      $('gate').style.display = 'flex';
+      var btn = $('installbtn');
+      var ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      var deferred = null;
+      var installed = false;
+
+      function finished() {
+        installed = true;
+        show('doneNote', true); show('alreadyNote', false); show('howOther', false); show('howIos', false);
+        btn.classList.add('hide');
+        $('gatetitle').textContent = 'GoviLink is installed';
+        $('gatelead').textContent = 'You can close this page now.';
+      }
+
+      window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        deferred = e;
+        if (installed) return;
+        btn.disabled = false;
+        btn.textContent = 'Install GoviLink';
+        show('howOther', false);
+      });
+      window.addEventListener('appinstalled', finished);
+
+      btn.addEventListener('click', function () {
+        if (!deferred) { show('howOther', true); return; }
+        deferred.prompt();
+        deferred.userChoice.then(function (choice) { deferred = null; if (choice.outcome === 'accepted') finished(); else { btn.textContent = 'Install GoviLink'; } });
+      });
+
+      if (ios) {
+        btn.classList.add('hide');
+        show('howIos', true);
+        $('gatelead').textContent = 'GoviLink works as an app on your phone. Install it once, then open it from your home screen.';
+        return;
+      }
+
+      // Chrome can tell us if the app is already on this device
+      if (navigator.getInstalledRelatedApps) {
+        navigator.getInstalledRelatedApps().then(function (apps) {
+          if (apps && apps.length && !installed) { show('alreadyNote', true); btn.textContent = 'Install again'; }
+        }).catch(function () {});
+      }
+
+      // If the browser has not offered installation after a few seconds, show how to do it by hand
+      setTimeout(function () {
+        if (!deferred && !installed) {
+          btn.disabled = false;
+          btn.textContent = 'How to install';
+          show('howOther', true);
+        }
+      }, 4000);
+    }
+
+    if (inApp) startApp(); else startGate();
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
   </script>
 </body>
