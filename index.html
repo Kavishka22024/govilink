@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>GoviLink</title>
+  <meta name="description" content="GoviLink: know your farmers, reach the right ones.">
+  <meta name="theme-color" content="#0c2217">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="GoviLink">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <style>
+    html, body { height:100%; margin:0; background:#0c2217; font-family:'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; }
+    #frame { position:fixed; left:0; right:0; bottom:0; top:0; width:100%; height:100%; border:0; background:#fff; opacity:0; transition:opacity .25s; }
+    #frame.on { opacity:1; }
+    #splash { position:fixed; inset:0; display:grid; place-items:center; color:#d6e8de; background:radial-gradient(900px 500px at 20% -10%, #1d6f47 0%, transparent 60%), linear-gradient(160deg, #0b2a1b 0%, #0f3b26 55%, #0a2216 100%); transition:opacity .3s; }
+    #splash.off { opacity:0; pointer-events:none; }
+    #splash .box { text-align:center; }
+    #splash img { width:84px; height:84px; border-radius:20px; box-shadow:0 8px 28px rgba(0,0,0,.35); }
+    #splash h1 { margin:16px 0 4px; font-size:26px; color:#fff; letter-spacing:.01em; }
+    #splash p { margin:0; font-size:13px; color:#8fb3a0; letter-spacing:.05em; }
+    .spin { width:22px; height:22px; border-radius:50%; margin:22px auto 0; border:2.5px solid rgba(255,255,255,.2); border-top-color:#4fd18b; animation:spin .8s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    #trouble { display:none; margin-top:22px; font-size:13px; color:#b9d3c4; }
+    #trouble a { color:#6fe0a6; }
+    /* install hint: a slim bar that disappears once used or dismissed */
+    #install { position:fixed; left:0; right:0; bottom:0; z-index:5; display:none; align-items:center; gap:12px; padding:10px 14px calc(10px + env(safe-area-inset-bottom)); background:#0c2217; color:#d6e8de; font-size:13.5px; box-shadow:0 -4px 18px rgba(0,0,0,.25); }
+    #install.on { display:flex; }
+    #install span { flex:1; }
+    #install button { border:0; border-radius:8px; padding:8px 14px; font:inherit; font-weight:600; cursor:pointer; }
+    #install .go { background:#1f9d62; color:#fff; }
+    #install .no { background:transparent; color:#8fb3a0; }
+  </style>
+</head>
+<body>
+  <div id="splash">
+    <div class="box">
+      <img src="icon-192.png" alt="">
+      <h1>GoviLink</h1>
+      <p>FARMER INTELLIGENCE</p>
+      <div class="spin"></div>
+      <div id="trouble">Taking longer than usual. <a id="direct" href="#">Open GoviLink directly</a></div>
+    </div>
+  </div>
+  <iframe id="frame" title="GoviLink" allow="clipboard-read; clipboard-write; fullscreen; downloads"></iframe>
+  <div id="install"><span id="installtext">Install GoviLink on this device for one-tap access.</span><button class="go" id="installgo" type="button">Install</button><button class="no" id="installno" type="button">Not now</button></div>
+
+  <script>
+    // The address of the GoviLink web app (an Apps Script deployment). Updates to the app reach everyone automatically.
+    var APP_URL = 'https://script.google.com/macros/s/AKfycbyIAir3h3U8SM17dVF0tM2W84OUcgmj1OF_UcgXkZmyeSUMBWfOrqrSB1ohAX0HwPNX/exec';
+
+    var frame = document.getElementById('frame');
+    var splash = document.getElementById('splash');
+    document.getElementById('direct').href = APP_URL;
+    frame.addEventListener('load', function () { frame.className = 'on'; splash.className = 'off'; });
+    frame.src = APP_URL;
+    setTimeout(function () { if (splash.className !== 'off') document.getElementById('trouble').style.display = 'block'; }, 12000);
+
+    // ---- install prompt
+    var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    var bar = document.getElementById('install');
+    var dismissed = false;
+    try { dismissed = localStorage.getItem('govilink-install-dismissed') === '1'; } catch (e) {}
+    function hideBar() { bar.className = ''; try { localStorage.setItem('govilink-install-dismissed', '1'); } catch (e) {} }
+    document.getElementById('installno').addEventListener('click', hideBar);
+    var deferred = null;
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      deferred = e;
+      if (!standalone && !dismissed) bar.className = 'on';
+    });
+    document.getElementById('installgo').addEventListener('click', function () {
+      if (deferred) { deferred.prompt(); deferred.userChoice.then(function () { deferred = null; hideBar(); }); }
+      else hideBar();
+    });
+    window.addEventListener('appinstalled', function () { bar.className = ''; });
+    // iPhones and iPads have no install button: explain the Share menu instead
+    var ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+    if (ios && !standalone && !dismissed) {
+      document.getElementById('installtext').textContent = 'To install: tap the Share button, then “Add to Home Screen”.';
+      document.getElementById('installgo').style.display = 'none';
+      document.getElementById('installno').textContent = 'Got it';
+      bar.className = 'on';
+    }
+
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
+  </script>
+</body>
+</html>
